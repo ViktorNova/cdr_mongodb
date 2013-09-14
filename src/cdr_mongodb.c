@@ -171,11 +171,11 @@ static int mongodb_log(struct ast_cdr *cdr)
 
 	ast_debug(1, "mongodb: channel.\n");
 	bson_append_string(b, "channel" , cdr->channel);
-    split_data_insert(cdr, b, "channel", "channeltype", "channelentity");
+	split_data_insert(cdr, b, "channel", "channeltype", "channelentity");
 
 	ast_debug(1, "mongodb: dstchannel.\n");
 	bson_append_string(b, "dstchannel" , cdr->dstchannel);
-    split_data_insert(cdr, b, "dstchannel", "dstchanneltype", "dstchannelentity");
+	split_data_insert(cdr, b, "dstchannel", "dstchanneltype", "dstchannelentity");
 
 	ast_debug(1, "mongodb: lastapp.\n");
 	bson_append_string(b, "lastapp" , cdr->lastapp);
@@ -329,7 +329,7 @@ static int load_config_number(struct ast_config *cfg, const char *category, cons
 
 static int _load_module(int reload)
 {
-    int res;
+	int res;
 	struct ast_config *cfg;
 	struct ast_variable *var;
 	struct ast_flags config_flags = { reload ? CONFIG_FLAG_FILEUNCHANGED : 0 };
