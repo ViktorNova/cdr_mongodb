@@ -27,33 +27,16 @@
  * \ingroup cdr_drivers
  */
 
-#include <asterisk.h>
+#include "asterisk.h"
 
-#include <sys/types.h>
-#include <asterisk/config.h>
-#include <asterisk/options.h>
-#include <asterisk/channel.h>
-#include <asterisk/cdr.h>
-#include <asterisk/module.h>
-#include <asterisk/logger.h>
-#include <asterisk/cli.h>
-#include <asterisk/strings.h>
-#include <asterisk/linkedlists.h>
-#include <asterisk/threadstorage.h>
+#include "asterisk/config.h"
+#include "asterisk/channel.h"
+#include "asterisk/cdr.h"
+#include "asterisk/module.h"
+#include "asterisk/logger.h"
+#include "asterisk/cli.h"
 
-#include <stdio.h>
-#include <string.h>
-
-#include <stdlib.h>
-#include <unistd.h>
-#include <time.h>
-
-#include <mongo.h>
-#include <bson.h>
-
-#include <sys/stat.h>
-#include <sys/types.h>
-#include <errno.h>
+#include "mongo.h"
 
 static char *desc = "MongoDB CDR Backend";
 static char *name = "mongodb";
@@ -86,6 +69,13 @@ struct unload_string {
 static int _unload_module(int reload)
 {
 	ast_cdr_unregister(name);
+	ast_free(hostname);
+	ast_free(dbname);
+	ast_free(dbcollection);
+	ast_free(dbnamespace);
+	ast_free(dbuser);
+	ast_free(password);
+	ast_free(customfields);
 	return 0;
 }
 
@@ -126,17 +116,17 @@ static int mongodb_log(struct ast_cdr *cdr)
 
 	ast_debug(1, "mongodb: Starting mongodb_log.\n");
 
-	mongo_init(&conn);
-	if (mongo_client(&conn , ast_str_buffer(hostname), dbport ) != MONGO_OK){
-		mongo_destroy(&conn);
+	mongo_init(conn);
+	if (mongo_client(conn , ast_str_buffer(hostname), dbport ) != MONGO_OK){
+		mongo_destroy(conn);
 		ast_log(LOG_ERROR, "Method: mongodb_log, MongoDB failed to connect.\n");
 		connected = 0;
 		records = 0;
 		return -1;
 	}
 
-	if (ast_str_strlen(dbuser) != 0 && (mongo_cmd_authenticate(&conn, ast_str_buffer(dbname), ast_str_buffer(dbuser), ast_str_buffer(password)) != MONGO_OK)) {
-		mongo_destroy(&conn);
+	if (ast_str_strlen(dbuser) != 0 && (mongo_cmd_authenticate(conn, ast_str_buffer(dbname), ast_str_buffer(dbuser), ast_str_buffer(password)) != MONGO_OK)) {
+		mongo_destroy(conn);
 		ast_log(LOG_ERROR, "Method: mongodb_log, MongoDB failed to authenticate to do %s with username %s!\n", ast_str_buffer(dbname), ast_str_buffer(dbuser));
 		connected = 0;
 		records = 0;
@@ -228,9 +218,9 @@ static int mongodb_log(struct ast_cdr *cdr)
 	bson_finish(b);
 
 	ast_debug(1, "mongodb: Inserting a CDR record.\n");
-	mongo_insert(&conn , ast_str_buffer(dbnamespace), b, NULL);
+	mongo_insert(conn , ast_str_buffer(dbnamespace), b, NULL);
 	bson_destroy(b);
-	mongo_destroy(&conn);
+	mongo_destroy(conn);
 
 	connected = 1;
 	records++;
@@ -389,18 +379,18 @@ static int _load_module(int reload)
 	dbnamespace = ast_str_create(255);
 	ast_str_set(&dbnamespace, 0, "%s.%s", ast_str_buffer(dbname), ast_str_buffer(dbcollection));
 
-	if (mongo_client(&conn , ast_str_buffer(hostname), dbport) != MONGO_OK) {
+	if (mongo_client(conn , ast_str_buffer(hostname), dbport) != MONGO_OK) {
 		ast_log(LOG_ERROR, "Method: _load_module, MongoDB failed to connect to %s:%d!\n", ast_str_buffer(hostname), dbport);
 		res = -1;
 	} else {
-		if (ast_str_strlen(dbuser) != 0 && (mongo_cmd_authenticate(&conn, ast_str_buffer(dbname), ast_str_buffer(dbuser), ast_str_buffer(password)) != MONGO_OK)) {
+		if (ast_str_strlen(dbuser) != 0 && (mongo_cmd_authenticate(conn, ast_str_buffer(dbname), ast_str_buffer(dbuser), ast_str_buffer(password)) != MONGO_OK)) {
 			ast_log(LOG_ERROR, "Method: _load_module, MongoDB failed to authenticate to do %s with username %s!\n", ast_str_buffer(dbname), ast_str_buffer(dbuser));
 			res = -1;
 		} else {
 			connected = 1;
 		}
 		
-		mongo_destroy(&conn);
+		mongo_destroy(conn);
 	}
 
 	ast_config_destroy(cfg);

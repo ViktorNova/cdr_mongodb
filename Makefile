@@ -25,6 +25,7 @@ CFLAGS_cdr_mongodb.so = \
 	-I/usr/include/ \
 	-I/usr/local/include/ \
 	-I/opt/asterisk/include/ \
+	-I/home/fulano/programs/asterisk/include \
 	-I../mongo-c-driver/src/
 CPPFLAGS_cdr_mongodb.so = 
 OBJS_cdr_mongodb.so =  \
