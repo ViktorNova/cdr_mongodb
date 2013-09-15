@@ -221,6 +221,8 @@ static int mongodb_log(struct ast_cdr *cdr)
 	mongo_insert(conn , ast_str_buffer(dbnamespace), b, NULL);
 	bson_destroy(b);
 	mongo_destroy(conn);
+	ast_free(result);
+	ast_free(value);
 
 	connected = 1;
 	records++;
@@ -332,7 +334,7 @@ static int _load_module(int reload)
 
 	if (!(cfg = ast_config_load(config, config_flags)) || cfg == CONFIG_STATUS_FILEINVALID) {
 		ast_log(LOG_WARNING, "Unable to load config for mongodb CDR's: %s\n", config);
-		return AST_MODULE_LOAD_SUCCESS;
+		return AST_MODULE_LOAD_FAILURE;
 	} else if (cfg == CONFIG_STATUS_FILEUNCHANGED) {
 		return AST_MODULE_LOAD_SUCCESS;
 	}
@@ -343,9 +345,8 @@ static int _load_module(int reload)
 	}
 
 	ast_debug(1, "Browsing mongodb Global.\n");
-	var = ast_variable_browse(cfg, "global");
-	if (!var) {
-		return AST_MODULE_LOAD_SUCCESS;
+	if (!(var = ast_variable_browse(cfg, "global"))) {
+		return AST_MODULE_LOAD_FAILURE;
 	}
 
 	res = 0;
